@@ -1,0 +1,58 @@
+
+[ca]
+default_ca = CA_default
+
+[CA_default]
+certs = /var/lib/openvpn/certs
+crl_dir = /var/lib/openvpn/crls
+new_certs_dir = /var/lib/openvpn/certs
+
+certificate	= /var/lib/openvpn/certs/local-ca.crt
+private_key	= /var/lib/openvpn/keys/local-ca.key
+database = /var/lib/openvpn/index.txt
+serial = /var/lib/openvpn/serial
+crl = /var/lib/openvpn/crl.pem
+RANDFILE = /var/lib/openvpn/.rnd
+
+x509_extensions	= basic_exts
+crl_extensions	= crl_ext
+default_md = sha256
+preserve = no
+
+policy = policy_anything
+
+[policy_anything]
+countryName		    = optional
+stateOrProvinceName	= optional
+localityName		= optional
+organizationName	= optional
+organizationalUnitName	= optional
+commonName		    = supplied
+name			    = optional
+emailAddress		= optional
+
+[req]
+default_bits	= 1024
+default_keyfile = privkey.pem
+default_md		= sha256
+distinguished_name = cn_only
+x509_extensions	= easyrsa_ca
+
+[cn_only]
+commonName = Common Name (eg: your user, host, or server name)
+commonName_max = 64
+commonName_default = none
+
+[basic_exts]
+basicConstraints = CA:FALSE
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer:always
+
+[easyrsa_ca]
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid:always,issuer:always
+basicConstraints = CA:true
+keyUsage = cRLSign, keyCertSign
+
+[crl_ext]
+authorityKeyIdentifier=keyid:always,issuer:always
