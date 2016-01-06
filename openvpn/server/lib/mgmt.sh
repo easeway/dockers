@@ -1,3 +1,5 @@
+test -z "$DEBUG" || set -x
+
 export CERT_DAYS=${VPN_CERT_DAYS:-3650}
 
 export BASE_DIR=/var/lib/openvpn
@@ -55,18 +57,37 @@ self-sign() {
 
 push-certs() {
     local server="$1"
-    curl http://$server/certs/local.csr >/tmp/server.csr
+    curl -s -S http://$server/certs/local.csr >/tmp/server.csr
     openssl ca -batch -days $CERT_DAYS \
         -out /tmp/server.crt -in /tmp/server.csr \
         -config "$KEY_CONFIG"
     cp -f "$LOCAL_CA_CRT" "$CA_CRT"
-    curl http://$server/op/ctl/ca-cert --data-binary "@$CA_CRT" -H Expect:
-    curl http://$server/op/ctl/cert --data-binary @/tmp/server.crt -H Expect:
-    curl http://$server/op/ctl/restart
+    curl -s -S http://$server/op/ctl/ca-cert --data-binary "@$CA_CRT" -H Expect:
+    curl -s -S http://$server/op/ctl/cert --data-binary @/tmp/server.crt -H Expect:
+    curl -s -S http://$server/op/ctl/restart
 }
 
 request-certs() {
     local server="$1"
-    curl http://$server/op/ctl/sign --data-binary "@$LOCAL_CSR" >"$LOCAL_CRT"
-    curl http://$server/certs/ca.crt >"$CA_CRT"
+    curl -s -S http://$server/op/ctl/sign --data-binary "@$LOCAL_CSR" >"$LOCAL_CRT"
+    curl -s -S http://$server/certs/ca.crt >"$CA_CRT"
+}
+
+wait-server-ready() {
+    local server="$1" timeout=$2 start end state left
+    test $timeout -gt 0 2>/dev/null || return 0
+    echo "Wait server for $timeout seconds ..."
+    start=$(date +%s)
+    end=$(($start+$timeout))
+    while [ $(date +%s) -le $end ]; do
+        state=$(curl -s -m 5 http://$server/op/state || true)
+        if [ "$state" == "up" ]; then
+            echo "Server is READY!"
+            return 0
+        fi
+        left=$(($end-$(date +%s)))
+        test $left -le 0 2>/dev/null || echo "$left"
+    done
+    echo "Waiting for server timeout!"
+    return 1
 }

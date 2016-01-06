@@ -6,10 +6,14 @@ SERVER="$1"
 shift
 
 USE_LOCAL_CA=
+WAIT_SERVER_READY=
 for a in $@ ; do
     case "$a" in
         --local-ca)
             USE_LOCAL_CA=yes
+            ;;
+        --wait=*)
+            WAIT_SERVER_READY=${a#--wait=}
             ;;
     esac
 done
@@ -17,6 +21,8 @@ done
 set -e
 
 init-local-env
+test -z "$WAIT_SERVER_READY" || \
+    wait-server-ready "$SERVER" $WAIT_SERVER_READY
 
 if [ -n "$USE_LOCAL_CA" ]; then
     echo "USE LOCAL CA"

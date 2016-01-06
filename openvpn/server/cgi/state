@@ -1,0 +1,16 @@
+#!/bin/bash
+
+STATE=down
+
+PIDS=$(pidof openvpn)
+REPORT_PID=
+if [ -f /var/run/openvpn.pid ]; then
+    REPORT_PID=$(cat /var/run/openvpn.pid)
+fi
+
+test -z "$PIDS" -o -z "$REPORT_PID" || STATE=up
+
+echo "Content-type: text/plain"
+echo "Content-length: ${#STATE}"
+echo ""
+echo "$STATE"
