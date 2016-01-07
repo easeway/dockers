@@ -17,11 +17,39 @@ EC2_RUN_OPTS=
 test -z "$AWS_SECURITY_GROUPS" || EC2_RUN_OPTS="--security-group-ids $AWS_SECURITY_GROUPS $EC2_RUN_OPTS"
 test -z "$AWS_KEY" || EC2_RUN_OPTS="--key-name $AWS_KEY $EC2_RUN_OPTS"
 
-SERVER_OPTS=
+aws-cli() {
+    aws --output json $CLI_OPTS $@
+}
+
+aws-ec2() {
+    aws-cli ec2 $@ $AWS_EC2_OPTIONS
+}
+
+# determine AWS_SUBNET is an Id or CIDR format
+if echo "$AWS_SUBNET" | \
+    grep -E '^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$' >/dev/null 2>&1 ; then
+    # this is CIDR format
+    SUBNET_ID=$(aws-ec2 describe-subnets \
+        --filters Name=cidrBlock,Values=$AWS_SUBNET \
+        --query Subnets[0] | \
+        jq -r -c -M .SubnetId 2>/dev/null)
+    test -n "$SUBNET_ID" || fatal "Subnet $AWS_SUBNET not found"
+    REMOTE_SUBNET=$AWS_SUBNET
+    AWS_SUBNET="$SUBNET_ID"
+else
+    # this is subnet Id
+    REMOTE_SUBNET=$(aws-ec2 describe-subnets \
+        --subnet-ids "$AWS_SUBNET" | \
+        jq -c -r -M .Subnets[0].CidrBlock 2>/dev/null)
+    test -n "$REMOTE_SUBNET" || fatal "Subnet $AWS_SUBNET not found"
+fi
+
+VPN_ROUTES="$VPN_ROUTES $REMOTE_SUBNET"
+
+SERVER_OPTS="-e VPN_ROUTES=\"$VPN_ROUTES\""
 test -z "$VPN_PORT" || SERVER_OPTS="$SERVER_OPTS -e VPN_PORT=$VPN_PORT"
 test -z "$VPN_SUBNET" || SERVER_OPTS="$SERVER_OPTS -e VPN_SUBNET=$VPN_SUBNET"
 test -z "$VPN_NETMASK" || SERVER_OPTS="$SERVER_OPTS -e VPN_NETMASK=$VPN_NETMASK"
-test -z "$VPN_ROUTES" || SERVER_OPTS="$SERVER_OPTS -e VPN_ROUTES=\"$VPN_ROUTES\""
 test -z "$VPN_SERVER_OPTIONS" || SERVER_OPTS="$SERVER_OPTS -e VPN_OPTIONS=\"$VPN_SERVER_OPTIONS\""
 
 if [ -f $HOME/.ssh/id_rsa.pub ]; then
@@ -38,14 +66,6 @@ systemctl start docker
 docker pull easeway/openvpn:latest
 docker run --restart=always --net=host --cap-add=NET_ADMIN -d $SERVER_OPTS easeway/openvpn:latest
 EOF
-
-aws-cli() {
-    aws --output json $CLI_OPTS $@
-}
-
-aws-ec2() {
-    aws-cli ec2 $@ $AWS_EC2_OPTIONS
-}
 
 INSTANCE_ID=
 INSTANCE_ID=$(aws-ec2 run-instances \

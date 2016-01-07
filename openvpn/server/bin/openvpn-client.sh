@@ -38,4 +38,4 @@ exec /usr/sbin/openvpn \
     --client \
     --config "$CONFIG_FILE" \
     --remote "$SERVER" ${VPN_PORT:-1194} \
-    $OPTIONS $OPENVPN_OPTIONS
+    $VPN_OPTIONS

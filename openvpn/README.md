@@ -27,5 +27,5 @@ There are a few environment variables you can use the override the default confi
 - `VPN_PORT`: the default listening port 1194.
 - `VPN_SUBNET`: the default is 10.8.0.0
 - `VPN_NETMASK`: the default is 255.255.255.0
-- `VPN_ROUTES`: a list of "subnet netmask" to be used in "push" option
+- `VPN_ROUTES`: a list of CIDR blocks to be routed by server
 - `VPN_OPTIONS`: other command-line arguments appended to `openvpn`.

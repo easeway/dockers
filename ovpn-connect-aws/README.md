@@ -6,7 +6,7 @@ tunnel automatically.
 ## Usage
 
 ```
-docker run -ti -e AWS_SUBNET=subnetId -e AWS_SECURITY_GROUPS=securityGroupId
+docker run -ti -e AWS_SUBNET=subnetId
     -v $HOME/.aws:/.aws       # for credentials used by AWS
     -v /tmp/aws:/var/run/aws  # for tracking AWS instance id
     --net=host
@@ -24,8 +24,10 @@ Please note, the volume mapped to `/var/run/aws` is important:
 It's necessary to do housekeeping removing the OpenVPN server using
 `server-instance-id` when no longer needed.
 
-There are a few more environment variables:
+Here are environment variables:
 
+- `AWS_SUBNET`: required, subnetId or cidrBlock
+- `AWS_SECURITY_GROUPS`: security group Ids
 - `AWS_KEY`: key pair name if you want to ssh into OpenVPN server VM
 - `AWS_IMAGE`: AMI image for VM, default is `ami-0eacc46e` which is `CoreOS-stable-835.9.0-hvm`
 - `AWS_INSTANCE_TYPE`: default is `t2.nano`
