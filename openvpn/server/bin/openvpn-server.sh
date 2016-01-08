@@ -13,15 +13,17 @@ IF_IN_RULES=""
 
 if [ -n "$VPN_ROUTES" ]; then
     for subnet in $VPN_ROUTES; do
+        OPTIONS="$OPTIONS --push \"route ${subnet%/*} $NETMASK\""
         IF=$(ip -o addr show to $subnet | cut -d ' ' -f 2)
         NETMASK=$(ipcalc -m $subnet | cut -d = -f 2)
         if [ -n "$IF" -a -n "$NETMASK" ]; then
-            OPTIONS="$OPTIONS --push \"route ${subnet%/*} $NETMASK\""
             echo "Routing $subnet via $IF"
             if ! iptables -t nat -C POSTROUTING -o $IF -j MASQUERADE 2>/dev/null; then
                 IF_IN_RULES="$IF_IN_RULES $IF"
                 iptables -t nat -A POSTROUTING -o $IF -j MASQUERADE
             fi
+        else
+            echo "WARNING interface not found for routing $subnet" >&2
         fi
     done
 fi
