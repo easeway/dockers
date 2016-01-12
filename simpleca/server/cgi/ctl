@@ -1,0 +1,31 @@
+#!/bin/bash
+
+response() {
+    local status body
+    while read; do
+        if [ -z "$status" ]; then
+            echo "Status: $REPLY"
+            status=yes
+        else
+            body="$body$REPLY"$'\n'
+        fi
+    done
+    echo "Content-type: text/plain"
+    echo "Content-length: ${#body}"
+    echo ""
+    test -z "$body" || echo "$body"
+}
+
+wrap-action() {
+    echo "$1 $REMOTE_ADDR $QUERY_STRING"
+    cat
+}
+
+ACTION=${PATH_INFO#/}
+if [ -z "$ACTION" ]; then
+    read
+    ACTION="$REPLY"
+fi
+wrap-action "$ACTION" | \
+    socat STDIO UNIX-CONNECT:/var/run/ctl.sock | \
+    response
