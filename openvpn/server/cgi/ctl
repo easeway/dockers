@@ -13,7 +13,7 @@ response() {
     echo "Content-type: text/plain"
     echo "Content-length: ${#body}"
     echo ""
-    test -z "$body" || echo "$body"
+    test -z "$body" || echo -n "$body"
 }
 
 wrap-action() {

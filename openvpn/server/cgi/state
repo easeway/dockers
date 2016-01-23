@@ -13,4 +13,4 @@ test -z "$PIDS" -o -z "$REPORT_PID" || STATE=up
 echo "Content-type: text/plain"
 echo "Content-length: ${#STATE}"
 echo ""
-echo "$STATE"
+echo -n "$STATE"
