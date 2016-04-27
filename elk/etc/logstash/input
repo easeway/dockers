@@ -1,0 +1,22 @@
+input {
+    file {
+        path => ["/logs"]
+    }
+
+    tcp {
+        port => 8081
+    }
+
+    udp {
+        port => 8081
+    }
+
+    http {
+    }
+
+    syslog {
+    }
+
+    gelf {
+    }
+}
